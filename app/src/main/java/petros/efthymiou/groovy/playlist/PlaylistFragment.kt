@@ -12,7 +12,12 @@ import petros.efthymiou.groovy.R
 
 class PlaylistFragment : Fragment() {
 
-    private val repository = PlaylistRepository()
+    private val service = PlaylistService(object : PlaylistAPI {
+        override suspend fun getPlayList(): List<Playlist> {
+            return emptyList()
+        }
+    })
+    private val repository = PlaylistRepository(service)
     lateinit var playlistViewModel: PlaylistViewModel
     lateinit var viewModelFactory: PlaylistViewModelFactory
 
