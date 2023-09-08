@@ -14,7 +14,7 @@ class PlaylistServiceShould: BaseUnitTest() {
 
     val api = mock<PlaylistAPI>()
     private val service = PlaylistService(api)
-    private val playList = mock<List<Playlist>>()
+    private val playList = mock<List<PlaylistRaw>>()
 
     @Test
     fun fetchPlaylistsFromApi() = runBlockingTest {

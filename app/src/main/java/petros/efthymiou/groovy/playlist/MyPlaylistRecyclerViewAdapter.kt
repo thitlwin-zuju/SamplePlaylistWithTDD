@@ -10,7 +10,8 @@ import petros.efthymiou.groovy.R
 import petros.efthymiou.groovy.databinding.ListItemBinding
 
 class MyPlaylistRecyclerViewAdapter(
-    private val values: List<Playlist>
+    private val values: List<Playlist>,
+    private val listener: (String) -> Unit
 ) : RecyclerView.Adapter<MyPlaylistRecyclerViewAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -29,7 +30,8 @@ class MyPlaylistRecyclerViewAdapter(
         val item = values[position]
         holder.tvName.text = item.name
         holder.tvCategory.text = item.category
-        holder.imvPlaylist.setImageResource(R.mipmap.playlist)
+        holder.imvPlaylist.setImageResource(item.image)
+        holder.root.setOnClickListener { listener(item.id) }
     }
 
     override fun getItemCount(): Int = values.size
@@ -39,6 +41,7 @@ class MyPlaylistRecyclerViewAdapter(
         val tvName: TextView = binding.tvPlaylistName
         val tvCategory: TextView = binding.tvPlaylistCategory
         val imvPlaylist: ImageView = binding.imvPlaylist
+        val root = binding.playlistItemRoot
     }
 
 }

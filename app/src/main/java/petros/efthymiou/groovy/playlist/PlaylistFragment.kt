@@ -8,17 +8,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.fragment_playlist.view.playlists_list
+import kotlinx.android.synthetic.main.fragment_playlist.view.loader
 import petros.efthymiou.groovy.R
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class PlaylistFragment : Fragment() {
 
-    private val service = PlaylistService(object : PlaylistAPI {
-        override suspend fun getPlayList(): List<Playlist> {
-            return emptyList()
-        }
-    })
-    private val repository = PlaylistRepository(service)
-    lateinit var playlistViewModel: PlaylistViewModel
+    private lateinit var playlistViewModel: PlaylistViewModel
+
+    @Inject
     lateinit var viewModelFactory: PlaylistViewModelFactory
 
     override fun onCreateView(
@@ -29,11 +31,18 @@ class PlaylistFragment : Fragment() {
 
         setupViewModel()
 
-        playlistViewModel.playList.observe(this) { playLists ->
+        playlistViewModel.playList.observe(viewLifecycleOwner) { playLists ->
             if (playLists.getOrNull() != null)
-                setupRecyclerView(view, playLists.getOrNull()!!)
-            else {
-                // TODO: Handle error
+                setupRecyclerView(view.playlists_list, playLists.getOrNull()!!)
+//            else {
+//                view.progressBar.visibility = View.GONE
+//            }
+        }
+
+        playlistViewModel.loader.observe(viewLifecycleOwner) { loading ->
+            when(loading) {
+                true -> view.loader.visibility = View.VISIBLE
+                false -> view.loader.visibility = View.GONE
             }
         }
         return view
@@ -45,12 +54,14 @@ class PlaylistFragment : Fragment() {
     ) {
         with(view as RecyclerView) {
             layoutManager = LinearLayoutManager(context)
-            adapter = MyPlaylistRecyclerViewAdapter(playLists)
+            adapter = MyPlaylistRecyclerViewAdapter(playLists){
+                val action = PlaylistFragmentDirections.actionPlaylistFragmentToPlaylistDetailFragment(it)
+                findNavController().navigate(action)
+            }
         }
     }
 
     private fun setupViewModel() {
-        viewModelFactory = PlaylistViewModelFactory(repository)
         playlistViewModel =
             ViewModelProvider(this, viewModelFactory).get(PlaylistViewModel::class.java)
     }

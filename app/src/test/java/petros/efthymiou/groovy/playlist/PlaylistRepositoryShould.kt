@@ -14,12 +14,15 @@ import petros.efthymiou.groovy.utils.BaseUnitTest
 class PlaylistRepositoryShould: BaseUnitTest() {
 
     private val service: PlaylistService = mock()
-    private val repository = PlaylistRepository(service)
+    private val mapper: PlaylistMapper = mock()
     private val playlist = mock<List<Playlist>>()
+    private val playlistRaw = mock<List<PlaylistRaw>>()
     private val exception = RuntimeException("Something went wrong")
 
     @Test
     fun getPlaylistsFromService() = runBlockingTest {
+        val repository = mockSuccessfulCase()
+
         repository.getPlaylists()
 
         verify(service, times(1)).fetchPlaylists()
@@ -27,31 +30,46 @@ class PlaylistRepositoryShould: BaseUnitTest() {
 
     @Test
     fun propagateError() = runBlockingTest {
-        mockErrorCase()
+        val repository = mockErrorCase()
 
         assertEquals(exception, repository.getPlaylists().first().exceptionOrNull())
     }
 
-    private suspend fun mockErrorCase() {
-        whenever(repository.getPlaylists()).thenReturn(
-            flow {
-                emit(Result.failure<List<Playlist>>(exception))
-            }
-        )
-    }
-
     @Test
     fun emitPlaylistsFromService() = runBlockingTest {
-        mockSuccessfulCase()
+        val repository = mockSuccessfulCase()
 
         assertEquals(playlist, repository.getPlaylists().first().getOrNull())
     }
 
-    private suspend fun mockSuccessfulCase() {
-        whenever(repository.getPlaylists()).thenReturn(
+    @Test
+    fun delegateBusinessLogicToMapper() = runBlockingTest {
+        val repository = mockSuccessfulCase()
+
+        repository.getPlaylists().first()
+
+        verify(mapper, times(1)).invoke(playlistRaw)
+    }
+
+    private suspend fun mockSuccessfulCase(): PlaylistRepository {
+        whenever(service.fetchPlaylists()).thenReturn(
             flow {
-                emit(Result.success(playlist))
+                emit(Result.success(playlistRaw))
             }
         )
+
+        whenever(mapper.invoke(playlistRaw)).thenReturn(playlist)
+
+        return PlaylistRepository(service, mapper)
     }
+
+    private suspend fun mockErrorCase(): PlaylistRepository {
+        whenever(service.fetchPlaylists()).thenReturn(
+            flow {
+                emit(Result.failure<List<PlaylistRaw>>(exception))
+            }
+        )
+        return PlaylistRepository(service, mapper)
+    }
+
 }

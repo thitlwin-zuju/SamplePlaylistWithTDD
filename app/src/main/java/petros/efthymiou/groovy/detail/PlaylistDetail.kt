@@ -1,4 +1,7 @@
 package petros.efthymiou.groovy.detail
 
-class PlaylistDetail {
-}
+data class PlaylistDetail(
+    val id: String,
+    val name: String,
+    val details: String
+)
