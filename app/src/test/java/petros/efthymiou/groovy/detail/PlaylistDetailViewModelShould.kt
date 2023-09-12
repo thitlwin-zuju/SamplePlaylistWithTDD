@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import petros.efthymiou.groovy.utils.BaseUnitTest
+import petros.efthymiou.groovy.utils.captureValues
 import petros.efthymiou.groovy.utils.getValueForTest
 
 class PlaylistDetailViewModelShould : BaseUnitTest() {
@@ -24,6 +25,8 @@ class PlaylistDetailViewModelShould : BaseUnitTest() {
     fun getPlaylistDetailFromService() = runBlockingTest {
         val viewModel = mockSuccessfulCase()
 
+        viewModel.getPlayListDetail(playListId)
+
         viewModel.playListDetail.getValueForTest()
 
         verify(playlistService, times(1)).fetchPlaylistDetail(playListId)
@@ -33,6 +36,8 @@ class PlaylistDetailViewModelShould : BaseUnitTest() {
     fun emitPlaylistDetailFromService() = runBlockingTest {
         val viewModel = mockSuccessfulCase()
 
+        viewModel.getPlayListDetail(playListId)
+
         assertEquals(result, viewModel.playListDetail.getValueForTest())
     }
 
@@ -41,6 +46,41 @@ class PlaylistDetailViewModelShould : BaseUnitTest() {
         val viewModel = mockErrorCase()
 
         assertEquals(error, viewModel.playListDetail.getValueForTest())
+    }
+
+    @Test
+    fun showLoaderWhileLoading() = runBlockingTest {
+        val viewModel = mockSuccessfulCase()
+
+        viewModel.loader.captureValues {
+            viewModel.getPlayListDetail(playListId)
+            viewModel.playListDetail.getValueForTest()
+            assertEquals(true, values[0])
+        }
+    }
+
+    @Test
+    fun closeLoaderAfterLoading() = runBlockingTest {
+        val viewModel = mockSuccessfulCase()
+
+        viewModel.loader.captureValues {
+            viewModel.getPlayListDetail(playListId)
+
+            viewModel.playListDetail.getValueForTest()
+            assertEquals(false, this.values.last())
+        }
+    }
+
+    @Test
+    fun closeLoaderAfterError() = runBlockingTest {
+        val viewModel = mockErrorCase()
+
+        viewModel.loader.captureValues {
+            viewModel.getPlayListDetail(playListId)
+
+            viewModel.playListDetail.getValueForTest()
+            assertEquals(false, this.values.last())
+        }
     }
 
     private suspend fun mockErrorCase(): PlaylistDetailViewModel {
@@ -59,7 +99,6 @@ class PlaylistDetailViewModelShould : BaseUnitTest() {
         })
 
         val viewModel = PlaylistDetailViewModel(playlistService)
-        viewModel.getPlayListDetail(playListId)
         return viewModel
     }
 
